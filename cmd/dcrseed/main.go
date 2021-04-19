@@ -173,6 +173,25 @@ func GenerateDiceEntropySeed(entropyStr string) ([]byte, error) {
 	return entropyArr, nil
 }
 
+func printAllWords() {
+	var wordList = strings.Split(alternatingWords, "\n")
+	idx := 0
+	hex := -1
+	var wordType = ""
+	for _, w := range wordList {
+		if idx%2 == 0 {
+			wordType = "Even"
+			hex++
+		} else {
+			wordType = "Odd"
+		}
+		hexa := leftPad2Len(fmt.Sprintf("%x", hex), "0", 2)
+		binary := leftPad2Len(strconv.FormatInt(int64(hex), 2), "0", 8)
+		fmt.Printf("[%s] %s : %s (%s)\n", hexa, binary, w, wordType)
+		idx++
+	}
+}
+
 func printSeed(seed []byte) {
 	fmt.Println("(1) Your wallet generation seed is:")
 	seedStr := walletseed.EncodeMnemonic(seed)
@@ -205,6 +224,7 @@ func printSeed(seed []byte) {
 }
 
 func main() {
+	printAllWords()
 	seed, err := GenerateRandomSeed(RecommendedSeedLen)
 	printSeed(seed)
 
@@ -218,5 +238,7 @@ func main() {
 
 	// https://en.wikipedia.org/wiki/PGP_word_list
 	// https://blog.alexellis.io/golang-writing-unit-tests/
-
+	// https://github.com/matheusd/bip39-to-dcr-seed
+	// https://github.com/tyler-smith/go-bip39
+	// https://www.rapidtables.com/convert/number/binary-to-hex.html
 }
