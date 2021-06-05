@@ -13,3 +13,10 @@ func TestEncodeBinarySlice(t *testing.T) {
 		t.Errorf("Expected %v, got %v", 33, result)
 	}
 }
+
+func TestLeftPad2Len(t *testing.T) {
+	result := LeftPad2Len("1", "0", 8)
+	if result != "00000001" {
+		t.Errorf("Expected 00000001, got %s", result)
+	}
+}
