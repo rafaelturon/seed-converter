@@ -15,7 +15,7 @@ func TestPrintPGPWords(t *testing.T) {
 func TestPrintSeed(t *testing.T) {
 	entropyArr := make([]byte, 32)
 	rand.Read(entropyArr)
-	err := printSeed(entropyArr)
+	err := printDecredSeed(entropyArr)
 	if err != nil {
 		t.Errorf("Unexpected error %w", err)
 	}

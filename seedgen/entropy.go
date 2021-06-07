@@ -84,7 +84,7 @@ func GenerateRandomSeed(size uint) ([]byte, error) {
 	return seed, nil
 }
 
-func GenerateDiceEntropySeed(entropyStr string) ([]byte, error) {
+func ConvertDiceRollsToBinaryStr(entropyStr string) (string, error) {
 	const op errors.Op = "walletseed.GenerateEntropySeed"
 	// log2(6) = 2.58496 bits per roll, with bias
 	// 4 rolls give 2 bits each
@@ -109,11 +109,32 @@ func GenerateDiceEntropySeed(entropyStr string) ([]byte, error) {
 		entry, err := strconv.Atoi(events[i])
 		events[i] = binary[entry]
 		if err != nil {
-			return nil, errors.E(op, err)
+			return "", errors.E(op, err)
 		}
 	}
 
-	binaryStr := strings.Join(events, "")
+	return strings.Join(events, ""), nil
+}
+
+func ConvertTrimmedBinary(trimmedBinaryStr string) ([]byte, error) {
+	var entropyArr []byte
+	runes := []rune(trimmedBinaryStr)
+	for i := 0; i < len(trimmedBinaryStr)/8; i++ {
+		byteAsBits := string(runes[i*8 : i*8+8])
+		if entropyByte, err := strconv.ParseUint(byteAsBits, 2, 8); err == nil {
+			entropyArr = append(entropyArr, byte(entropyByte))
+		}
+	}
+
+	return entropyArr, nil
+}
+
+func GenerateDiceEntropySeed(entropyStr string) ([]byte, error) {
+	binaryStr, err := ConvertDiceRollsToBinaryStr(entropyStr)
+	if err != nil {
+		fmt.Printf("Error converting dice rolls to binary: %s", err)
+		return nil, err
+	}
 
 	pwdStrength := zxcvbn.PasswordStrength(binaryStr, nil)
 	fmt.Printf("Entropy score     (0-4): %d\nEstimated entropy (bit): %f\nEstimated time to crack: %s\n\n",
@@ -134,13 +155,10 @@ func GenerateDiceEntropySeed(entropyStr string) ([]byte, error) {
 	var trimmedBinaryStr = binaryStr[start:]
 	fmt.Printf("Trimmed binary string %s of size %d bits starting at %d position\n", trimmedBinaryStr, bitsToUse, start)
 
-	var entropyArr []byte
-	runes := []rune(trimmedBinaryStr)
-	for i := 0; i < len(trimmedBinaryStr)/8; i++ {
-		byteAsBits := string(runes[i*8 : i*8+8])
-		if entropyByte, err := strconv.ParseUint(byteAsBits, 2, 8); err == nil {
-			entropyArr = append(entropyArr, byte(entropyByte))
-		}
+	entropyArr, err := ConvertTrimmedBinary(trimmedBinaryStr)
+	if err != nil {
+		fmt.Printf("Error converting trimmed string to binary: %s", err)
+		return nil, err
 	}
 
 	return entropyArr, nil
