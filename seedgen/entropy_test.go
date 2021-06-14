@@ -18,7 +18,7 @@ func TestGenerateRandomSeed(t *testing.T) {
 
 func TestGenerateDiceEntropySeed(t *testing.T) {
 	result, _ := GenerateDiceEntropySeed("6543213223453321316456543212345666555123442123453321316456543212345666555123442123453321316456543212345666555123442123453321316456543212345666555123442123453321316")
-	bb := uint16(result[0])
+	bb := uint16(result.RawData[0])
 	if bb != 183 {
 		t.Errorf("Expected %v, got %v", 183, result)
 	}

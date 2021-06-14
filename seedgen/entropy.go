@@ -45,6 +45,22 @@ var (
 		"bits", MinSeedBytes*8, MaxSeedBytes*8)
 )
 
+// Seed data
+type Seed struct {
+	RawData          []byte
+	Binary           BinarySeed
+	Score            int
+	Entropy          float64
+	CrackTimeDisplay string
+}
+
+// Binary seed data
+type BinarySeed struct {
+	Entropy string
+	Spaced  string
+	Trimmed string
+}
+
 // GenerateSeed returns a cryptographically secure random seed that can be used
 // as the input for the NewMaster function to generate a new master node.
 //
@@ -129,37 +145,40 @@ func ConvertTrimmedBinary(trimmedBinaryStr string) ([]byte, error) {
 	return entropyArr, nil
 }
 
-func GenerateDiceEntropySeed(entropyStr string) ([]byte, error) {
+func GenerateDiceEntropySeed(entropyStr string) (*Seed, error) {
+	var seed *Seed
+	var binarySeed BinarySeed
 	binaryStr, err := ConvertDiceRollsToBinaryStr(entropyStr)
 	if err != nil {
-		fmt.Printf("Error converting dice rolls to binary: %s", err)
-		return nil, err
+		return nil, errors.E(ErrConvertingDiceRolls, errors.Seed, err)
 	}
 
 	pwdStrength := zxcvbn.PasswordStrength(binaryStr, nil)
-	fmt.Printf("Entropy score     (0-4): %d\nEstimated entropy (bit): %f\nEstimated time to crack: %s\n\n",
-		pwdStrength.Score,
-		pwdStrength.Entropy,
-		pwdStrength.CrackTimeDisplay,
-	)
 
+	//binarySeed = new(BinarySeed)
 	numberOfBits := len(binaryStr)
 	var wordCount float64 = math.Floor(float64(numberOfBits)/32) * 3
 	var re = regexp.MustCompile(`.{1,11}`)
 	spacedBinaryStr := strings.Join(re.FindAllString(binaryStr, -1), " ")
-	fmt.Printf("Binary string entropy %s of size %d bits with %f words\n", binaryStr, numberOfBits, wordCount)
-	fmt.Println("Spaced Binary", spacedBinaryStr)
+	binarySeed.Entropy = fmt.Sprintf("Binary string entropy %s of size %d bits with %f words\n", binaryStr, numberOfBits, wordCount)
+	binarySeed.Spaced = fmt.Sprintf("Spaced Binary: %s", spacedBinaryStr)
 
 	var bitsToUse int = int(float64(len(binaryStr))/32) * 32
 	var start = int(len(binaryStr)) - bitsToUse
 	var trimmedBinaryStr = binaryStr[start:]
-	fmt.Printf("Trimmed binary string %s of size %d bits starting at %d position\n", trimmedBinaryStr, bitsToUse, start)
+	binarySeed.Trimmed = fmt.Sprintf("Trimmed binary string %s of size %d bits starting at %d position\n", trimmedBinaryStr, bitsToUse, start)
 
 	entropyArr, err := ConvertTrimmedBinary(trimmedBinaryStr)
 	if err != nil {
-		fmt.Printf("Error converting trimmed string to binary: %s", err)
-		return nil, err
+		return nil, errors.E(ErrConvertingTrimmedString, errors.Seed, err)
 	}
 
-	return entropyArr, nil
+	seed = new(Seed)
+	seed.RawData = entropyArr
+	seed.Binary = binarySeed
+	seed.Score = pwdStrength.Score
+	seed.Entropy = pwdStrength.Entropy
+	seed.CrackTimeDisplay = pwdStrength.CrackTimeDisplay
+
+	return seed, nil
 }
