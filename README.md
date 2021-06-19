@@ -24,3 +24,9 @@ go tool cover -html=coverage.out
 ```shell
 godoc -http=:6060
 ```
+### Protoc
+```shell
+go get google.golang.org/protobuf/cmd/protoc-gen-go
+go get google.golang.org/grpc/cmd/protoc-gen-go-grpc
+protoc --go_out=. --go-grpc_out=. entity.proto
+```

@@ -1,0 +1,19 @@
+syntax = "proto3";
+package proto;
+option go_package = "./";
+
+// The Api service definition
+service Api {
+  // Sends a seed request
+  rpc GetSeed (SeedRequest) returns (SeedReply) {}
+}
+
+// The request seed containing coin symbol
+message SeedRequest {
+  string coin = 1;
+}
+
+// The response message containing the seed
+message SeedReply {
+  string seed = 1;
+}
