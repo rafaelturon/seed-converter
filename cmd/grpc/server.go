@@ -2,14 +2,19 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 
 	pb "github.com/rafaelturon/seed-converter/proto"
 	"github.com/rafaelturon/seed-converter/seedgen"
 	"github.com/tyler-smith/go-bip39"
+
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/reflection"
 )
 
 const (
@@ -30,14 +35,21 @@ func (s *server) GetSeed(ctx context.Context, in *pb.SeedRequest) (*pb.SeedReply
 
 func main() {
 
-	fmt.Println("Go gRPC Beginners Tutorial!")
+	fmt.Println("gRPC Server")
 
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
-	//pb.RegisterGreeterServer(s, &server{})
+
+	cert, _ := ioutil.ReadFile("../../conf/certs/client.crt")
+	privateKey, _ := ioutil.ReadFile("../../conf/certs/client.key")
+	clientCert, _ := tls.X509KeyPair(cert, privateKey)
+
+	c := credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{clientCert}})
+	s := grpc.NewServer(grpc.Creds(c))
+	reflection.Register(s)
+
 	pb.RegisterApiServer(s, &server{})
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
